@@ -39,12 +39,27 @@ static uint8_t Fifth_Gear       = 5;
 static uint8_t Sixth_Gear       = 6;
 static uint8_t Seventh_Gear     = 7;
 static uint8_t Eigth_Gear       = 8;
-static uint8_t CVT_Fwd_Gear     = 9;
-static uint8_t Neutral_Gear     = 10;
-static uint8_t Reverse_Gear     = 11;
-static uint8_t Park             = 12;
+static uint8_t CVT_Fwd_Gear     = 12;
+static uint8_t Neutral_Gear     = 13;
+static uint8_t Reverse_Gear     = 14;
+static uint8_t Park_Gear        = 15;
 
-uint8_t ShifterPos = 0
+static uint8_t Between_Range       = 0;
+static uint8_t Park_Range          = 1;
+static uint8_t Revernse_Range      = 2;
+static uint8_t Neutral_Range       = 3;
+static uint8_t ForwardA_Range      = 4;
+static uint8_t ForwardB_Range      = 5;
+static uint8_t ForwardC_Range      = 6;
+static uint8_t ForwardD_Range      = 7;
+static uint8_t Unknown_Range       = 0xF;
+
+uint8_t GearCmdPos             = 0;
+uint8_t GearEstPos             = 0;
+uint8_t ShiftLeverPos          = 1; //Assume Park
+uint8_t TranEngageState        = 0; // default to not engage
+int16_t TMOilTemp              = 0; //-40 to 215 Deg C N-40
+bool    TM_Fault               = false;
 
 //We use this as an init function
 void 2ML70::SetCanInterface(CanHardware* c)
@@ -58,17 +73,24 @@ void 2ML70::SetCanInterface(CanHardware* c)
 void 2ML70::DecodeCAN(int id, uint32_t* data)
 {
     uint8_t* bytes = (uint8_t*)data;// arrgghhh this converts the two 32bit array into bytes. 
-    if (id == 0x153)// ASC1 contains road speed signal.
+    
+    if (id == 0x1F5)// Contains Gear Information per GMW8762
     {
-        //Vehicle speed signal in Km/h
-        //Calculation = ( (HEX[MSB] * 256) + HEX[LSB]) * 0.0625
-        //Min: 0x160 (0 Km/h)
+        GearCmdPos     = byte[1] & 0x0F; 
+        GearEstPos     = byte[0] & 0x0F;
+        ShiftLeverPos  = byte[3] & 0x0F;
+        TMEngageState  = byte[6] & 0x07;
+        // Is there a general Gear Param::SetFloat(Param::Veh_Speed, road_speed);
 
-        float road_speed = 0.0625f * (((bytes[2] << 8) | (bytes[1])) - 0x160);
-
-        Param::SetFloat(Param::Veh_Speed, road_speed);
-        AbsCANalive = true;
     }
+
+    if (id == 0x4C9)// Contains Gear Information per GMW8762
+    {
+        TMOilTemp     = byte[1]-40; 
+        TM_Fault      = byte[0] & 0x10;
+
+    }
+
     
 }
 
