@@ -61,6 +61,17 @@ uint8_t TranEngageState        = 0; // default to not engage
 int16_t TMOilTemp              = 0; //-40 to 215 Deg C N-40
 bool    TM_Fault               = false;
 
+
+//0C7
+uint8_t RotDirection            = 0 ;
+uint8_t RotStatus_LastTranType  = 0;
+uint8_t RotStatus_ResetOccur    = 0 ;
+uint8_t RotStatus_Validity      = 0;   
+uint8_t RotStatus_PulseCounter  = 0; 
+uint8_t RotStatus_TimeStamp     = 0; 
+
+
+
 //We use this as an init function
 void 2ML70::SetCanInterface(CanHardware* c)
 {
@@ -73,8 +84,10 @@ void 2ML70::SetCanInterface(CanHardware* c)
 void 2ML70::DecodeCAN(int id, uint32_t* data)
 {
     uint8_t* bytes = (uint8_t*)data;// arrgghhh this converts the two 32bit array into bytes. 
-    
-    if (id == 0x1F5)// Contains Gear Information per GMW8762
+
+
+    //1F5 71 D 0 0 0 0 3 
+    if (id == 0x1F5)// PPEI Transmission General Status 2 per GMW8762
     {
         GearCmdPos     = byte[1] & 0x0F; 
         GearEstPos     = byte[0] & 0x0F;
@@ -84,13 +97,35 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
 
     }
 
-    if (id == 0x4C9)// Contains Gear Information per GMW8762
+    if (id == 0x4C9)// PPEI Transmission General Status 3 per GMW8762
     {
         TMOilTemp     = byte[1]-40; 
         TM_Fault      = byte[0] & 0x10;
 
     }
 
+    //C7 63 FE 0 0 0 0 
+    //77F 71 18 5 62 0 7F 3 
+
+    if (id == 0x0C7)// PPEI Transmission Output Rotational Status per GMW8762
+    {
+        TMOilTemp     = byte[1]-40; 
+        TM_Fault      = byte[0] & 0x10;
+
+    }
+
+    if (id == 0x0F9)// PPEI Transmission General Status 1 per GMW8762
+    {
+        TMOilTemp     = byte[1]-40; 
+        TM_Fault      = byte[0] & 0x10;
+
+    }
+    if (id == 0x77F)// Diagnostic Trouble Code Information Extended per GMW8762
+    {
+        TMOilTemp     = byte[1]-40; 
+        TM_Fault      = byte[0] & 0x10;
+
+    }
     
 }
 
