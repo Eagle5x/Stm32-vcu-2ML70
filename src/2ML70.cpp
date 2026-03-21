@@ -134,10 +134,10 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
         RotStatus_Validity      = byte[0] & 0x04;  
         uint8_t PulseCounterMSB = byte[0] & 0x03;
         uint8_t PulseCounterLSB = byte[1];
-        RotStatus_PulseCounter  = (PulseCounterMSB<<8)+PulseCounterLSB; 
+        RotStatus_PulseCounter  = (PulseCounterMSB<<8) | PulseCounterLSB; 
         uint8_t TimeStampMSB    = byte[2];
         uint8_t TimeStampLSB    = byte[3];
-        RotStatus_TimeStamp     = (TimeStampMSB<<8)+TimeStampLSB; 
+        RotStatus_TimeStamp     = (TimeStampMSB<<8) | TimeStampLSB; 
 
     }
 
@@ -146,14 +146,14 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
         EstTorqueRatioValid         = byte[0] & 0x80;
         uint8_t EstTorqueRatioMSB   = byte[0] & 0x7F;
         uint8_t EstTorqueRatioLSB   = byte[1];
-        EstTorqueRatio              = (EstTorqueRatioMSB<<8) + EstTorqueRatioLSB;
+        EstTorqueRatio              = (EstTorqueRatioMSB<<8) | EstTorqueRatioLSB;
             
         OutputShaftAngleVelInvalid  = byte[2] & 0x80;;
         OutputShaftAngleVelSensPres = byte[2] & 0x40;
         
         uint8_t OutputShaftRPM_MSB   = byte[0];
         uint8_t OutputShaftRPM_LSM   = byte[1];
-        OutputShaftAngularVel        = (OutputShaftRPM_MSB<<8) + OutputShaftRPM_LSM;
+        OutputShaftAngularVel        = (OutputShaftRPM_MSB<<8) | OutputShaftRPM_LSM;
         OutputShaftAngularVel        = OutputShaftAngularVel * 0.25;     //0.0 to 16383.75 rpm (E=N*0.25) BYTES 3 & 4
 
     }
