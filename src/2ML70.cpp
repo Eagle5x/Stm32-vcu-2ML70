@@ -29,7 +29,7 @@
 *5000RPM = 345Hz
 *6000RPM = 413Hz
 */
-
+///Automatic Transmission Gears
 static uint8_t NotSupported     = 0;
 static uint8_t First_Gear       = 1;
 static uint8_t Second_Gear      = 2;
@@ -44,6 +44,7 @@ static uint8_t Neutral_Gear     = 13;
 static uint8_t Reverse_Gear     = 14;
 static uint8_t Park_Gear        = 15;
 
+// Automatic transmission shifter selections
 static uint8_t Between_Range       = 0;
 static uint8_t Park_Range          = 1;
 static uint8_t Revernse_Range      = 2;
@@ -54,10 +55,19 @@ static uint8_t ForwardC_Range      = 6;
 static uint8_t ForwardD_Range      = 7;
 static uint8_t Unknown_Range       = 0xF;
 
+//Transmission Engage States
+static uint8_t tNotEngaged          = 0;
+static uint8_t tEngagedForward      = 1;
+static uint8_t tEngagedReverse      = 2;
+static uint8_t tOpStateNotReached   = 3;
+
+//1F5
 uint8_t GearCmdPos             = 0;
 uint8_t GearEstPos             = 0;
 uint8_t ShiftLeverPos          = 1; //Assume Park
 uint8_t TranEngageState        = 0; // default to not engage
+
+//4C9
 int16_t TMOilTemp              = 0; //-40 to 215 Deg C N-40
 bool    TM_Fault               = false;
 
