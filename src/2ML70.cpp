@@ -68,6 +68,7 @@ uint8_t ShiftLeverPos          = 1; //Assume Park
 uint8_t TranEngageState        = 0; // default to not engage
 
 //4C9
+bool    TMOilTempInvalid       = true; 
 int16_t TMOilTemp              = 0; //-40 to 215 Deg C N-40
 bool    TM_Fault               = false;
 
@@ -77,10 +78,16 @@ uint8_t RotDirection            = 0 ;
 uint8_t RotStatus_LastTranType  = 0;
 uint8_t RotStatus_ResetOccur    = 0 ;
 uint8_t RotStatus_Validity      = 0;   
-uint8_t RotStatus_PulseCounter  = 0; 
+uint16_t RotStatus_PulseCounter = 0; 
 uint8_t RotStatus_TimeStamp     = 0; 
 
 
+//0F9 
+bool EstTorqueRatioValid         = 0;
+bool TorqueRatioValid            = 0;
+bool OutputShaftAngleVelInvalid  = true;
+bool OutputShaftAngleVelSensPres = false;
+float OutputShaftAngularVel      = 0; //0.0 to 16383.75 rpm (E=N*0.25) BYTES 3 & 4
 
 //We use this as an init function
 void 2ML70::SetCanInterface(CanHardware* c)
@@ -97,7 +104,7 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
 
 
     //1F5 71 D 0 0 0 0 3 
-    if (id == 0x1F5)// PPEI Transmission General Status 2 per GMW8762
+    if (id == 0x1F5)// PPEI Transmission General Status 2 per GMW8762 (40Hz)
     {
         GearCmdPos     = byte[1] & 0x0F; 
         GearEstPos     = byte[0] & 0x0F;
@@ -109,8 +116,10 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
 
     if (id == 0x4C9)// PPEI Transmission General Status 3 per GMW8762
     {
-        TMOilTemp     = byte[1]-40; 
-        TM_Fault      = byte[0] & 0x10;
+        TMOilTempInvalid = byte[0] & 0x80;
+        TM_Fault         = byte[0] & 0x10;
+        TMOilTemp        = byte[1]-40; 
+        
 
     }
 
@@ -119,21 +128,37 @@ void 2ML70::DecodeCAN(int id, uint32_t* data)
 
     if (id == 0x0C7)// PPEI Transmission Output Rotational Status per GMW8762
     {
-        TMOilTemp     = byte[1]-40; 
-        TM_Fault      = byte[0] & 0x10;
+        RotDirection            = byte[0] & 0xC0 ;
+        RotStatus_LastTranType  = byte[0] & 0x30;
+        RotStatus_ResetOccur    = byte[0] & 0x08;
+        RotStatus_Validity      = byte[0] & 0x04;  
+        uint8_t PulseCounterMSB = byte[0] & 0x03;
+        uint8_t PulseCounterLSB = byte[1];
+        RotStatus_PulseCounter  = (PulseCounterMSB<<8)+PulseCounterLSB; 
+        uint8_t TimeStampMSB    = byte[2];
+        uint8_t TimeStampLSB    = byte[3];
+        RotStatus_TimeStamp     = (TimeStampMSB<<8)+TimeStampLSB; 
 
     }
 
     if (id == 0x0F9)// PPEI Transmission General Status 1 per GMW8762
     {
-        TMOilTemp     = byte[1]-40; 
-        TM_Fault      = byte[0] & 0x10;
+        EstTorqueRatioValid         = byte[0] & 0x80;
+        uint8_t EstTorqueRatioMSB   = byte[0] & 0x7F;
+        uint8_t EstTorqueRatioLSB   = byte[1];
+        EstTorqueRatio              = (EstTorqueRatioMSB<<8) + EstTorqueRatioLSB;
+            
+        OutputShaftAngleVelInvalid  = byte[2] & 0x80;;
+        OutputShaftAngleVelSensPres = byte[2] & 0x40;
+        
+        uint8_t OutputShaftRPM_MSB   = byte[0];
+        uint8_t OutputShaftRPM_LSM   = byte[1];
+        OutputShaftAngularVel        = (OutputShaftRPM_MSB<<8) + OutputShaftRPM_LSM;
+        OutputShaftAngularVel        = OutputShaftAngularVel * 0.25;     //0.0 to 16383.75 rpm (E=N*0.25) BYTES 3 & 4
 
     }
     if (id == 0x77F)// Diagnostic Trouble Code Information Extended per GMW8762
     {
-        TMOilTemp     = byte[1]-40; 
-        TM_Fault      = byte[0] & 0x10;
 
     }
     
